@@ -142,6 +142,7 @@ int main(int argc, char **argv)
 	Point pos;
 	double speed;
 	double total_time;
+	double e_total;
 	int hours;
 	int minutes;
 
@@ -157,6 +158,7 @@ int main(int argc, char **argv)
 	pos.e = 0;
 	speed = 0;
 	total_time = 0;
+	e_total = 0;
 
 	init_map(gcode_map);
 
@@ -172,7 +174,7 @@ int main(int argc, char **argv)
 
 		if (0 != gcode_map.count(line_tokens[0]))
 		{
-			total_time += gcode_map[line_tokens[0]](line_tokens, pos, speed);
+			total_time += gcode_map[line_tokens[0]](line_tokens, pos, speed, e_total);
 		}
 		else
 		{
@@ -180,6 +182,10 @@ int main(int argc, char **argv)
 		}
 	}
 	file.close();
+
+	e_total += pos.e;
+
+	cout << "Filament - " << e_total << "mm" << endl;
 
 	cout << "Estimation - ";
 	print_time(total_time);

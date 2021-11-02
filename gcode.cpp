@@ -38,7 +38,7 @@ pair<char, double> extract_argument(const string& str)
 }
 
 // Linear Move
-double g1(const vector<string>& line_tokens, Point& pos, double& speed)
+double g1(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	double result;
 	vector<string>::const_iterator it;
@@ -124,7 +124,7 @@ double g1(const vector<string>& line_tokens, Point& pos, double& speed)
 }
 
 // Dwell
-double g4(const vector<string>& line_tokens, Point& pos, double& speed)
+double g4(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	double result;
 	vector<string>::const_iterator it;
@@ -168,26 +168,26 @@ double g4(const vector<string>& line_tokens, Point& pos, double& speed)
 }
 
 // Set Units to Milimeters
-double g21(const vector<string>& line_tokens, Point& pos, double& speed)
+double g21(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Move to Origin (Home)
-double g28(const vector<string>& line_tokens, Point& pos, double& speed)
+double g28(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	// Used only at beginning or end so not relevant
 	return 0;
 }
 
 // Set to Absolute Positioning
-double g90(const vector<string>& line_tokens, Point& pos, double& speed)
+double g90(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Set Position
-double g92(const vector<string>& line_tokens, Point& pos, double& speed)
+double g92(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	vector<string>::const_iterator it;
 	pair<char, double> arg;
@@ -212,6 +212,8 @@ double g92(const vector<string>& line_tokens, Point& pos, double& speed)
 		switch (arg.first)
 		{
 		case 'E':
+			e_total_offset += pos.e;
+			e_total_offset -= arg.second;
 			pos.e = arg.second;
 			break;
 
@@ -244,56 +246,56 @@ double g92(const vector<string>& line_tokens, Point& pos, double& speed)
 }
 
 // Set extruder to absolute mode
-double m82(const vector<string>& line_tokens, Point& pos, double& speed)
+double m82(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Stop idle hold
-double m84(const vector<string>& line_tokens, Point& pos, double& speed)
+double m84(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Set Extruder Temperature
-double m104(const vector<string>& line_tokens, Point& pos, double& speed)
+double m104(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Fan On
-double m106(const vector<string>& line_tokens, Point& pos, double& speed)
+double m106(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Fan Off
-double m107(const vector<string>& line_tokens, Point& pos, double& speed)
+double m107(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Set Extruder Temperature and Wait
-double m109(const vector<string>& line_tokens, Point& pos, double& speed)
+double m109(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	// Assume everything is preheated
 	return 0;
 }
 
 // Display Message
-double m117(const vector<string>& line_tokens, Point& pos, double& speed)
+double m117(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Set Bed Temperature (Fast)
-double m140(const vector<string>& line_tokens, Point& pos, double& speed)
+double m140(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	return 0;
 }
 
 // Wait for bed temperature to reach target temp
-double m190(const vector<string>& line_tokens, Point& pos, double& speed)
+double m190(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
 {
 	// Assume everything is preheated
 	return 0;
