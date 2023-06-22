@@ -1,0 +1,28 @@
+{
+	"x":
+	{
+		"acceleration": 500,
+		"velocity": 500,
+		"jerk": 10
+	},
+	"y":
+	{
+		"acceleration": 500,
+		"velocity": 500,
+		"jerk": 10
+	},
+	"z":
+	{
+		"acceleration": 100,
+		"velocity": 5,
+		"jerk": 0.4
+	},
+	"extruders":
+	[
+		{
+			"acceleration": 500,
+			"velocity": 50,
+			"jerk": 5
+		}
+	]
+}

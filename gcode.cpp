@@ -37,16 +37,21 @@ pair<char, double> extract_argument(const string& str)
 	return result;
 }
 
+void gcode_dummy(const vector<string>&, TimeCalc&, double&)
+{
+}
+
 // Linear Move
-double g1(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
+void g1(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 {
 	double result;
 	vector<string>::const_iterator it;
 	pair<char, double> arg;
-	Point end;
+	Point pos = calc.get_pos();
+	Point pos_old = pos;
 	double distance;
+	static int counter = 1;
 
-	end = pos;
 	it = line_tokens.begin();
 	for (++it; it != line_tokens.end(); ++it)
 	{
@@ -56,28 +61,34 @@ double g1(const vector<string>& line_tokens, Point& pos, double& speed, double& 
 		{
 		// Extruder
 		case 'E':
-			end.e = arg.second;
+		case 'e':
+			pos.e = arg.second;
 			break;
 
 		// Feedrate (Speed) in units/min
 		case 'F':
+		case 'f':
 			speed = arg.second / 60;
 			break;
 
 		// Laser power
 		case 'S':
+		case 's':
 			break;
 
 		case 'X':
-			end.x = arg.second;
+		case 'x':
+			pos.x = arg.second;
 			break;
 
 		case 'Y':
-			end.y = arg.second;
+		case 'y':
+			pos.y = arg.second;
 			break;
 
 		case 'Z':
-			end.z = arg.second;
+		case 'z':
+			pos.z = arg.second;
 			break;
 
 		default:
@@ -86,45 +97,11 @@ double g1(const vector<string>& line_tokens, Point& pos, double& speed, double& 
 		}
 	}
 
-#if DEBUG
-	for (vector<string>::const_iterator it = line_tokens.begin(); it != line_tokens.end(); ++it)
-	{
-		cout << *it << " ";
-	}
-	cout << endl;
-
-	cout << "Old pos - ";
-	pos.print();
-	cout << endl;
-	cout << "New pos - ";
-	end.print();
-	cout << endl;
-#endif // DEBUG
-
-	result = 0;
-	// Perform time calc
-	distance = pos.get_dist(end);
-#if DEBUG
-	cout << "Distance - " << distance << endl;
-	cout << "Speed - " << speed << endl;
-#endif
-	if (0 != speed)
-	{
-		result = distance / speed;
-	}
-
-	// Our new position
-	pos = end;
-
-#if DEBUG
-	cout << "Time - " << result << endl << endl;
-#endif // DEBUG
-
-	return result;
+	calc.add_move(pos, speed);
 }
 
 // Dwell
-double g4(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
+void g4(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 {
 	double result;
 	vector<string>::const_iterator it;
@@ -140,11 +117,13 @@ double g4(const vector<string>& line_tokens, Point& pos, double& speed, double& 
 		{
 		// P is for miliseconds
 		case 'P':
+		case 'p':
 			result += arg.second / 1000;
 			break;
 
 		// S is for seconds
 		case 'S':
+		case 's':
 			result += arg.second;
 			break;
 
@@ -154,43 +133,27 @@ double g4(const vector<string>& line_tokens, Point& pos, double& speed, double& 
 		}
 	}
 
-#if DEBUG
-	for (vector<string>::const_iterator it = line_tokens.begin(); it != line_tokens.end(); ++it)
-	{
-		cout << *it << " ";
-	}
-	cout << endl;
-
-	cout << "Time - " << result << endl << endl;
-#endif // DEBUG
-
-	return result;
-}
-
-// Set Units to Milimeters
-double g21(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
+	calc.add_time(result);
 }
 
 // Move to Origin (Home)
-double g28(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
+void g28(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 {
-	// Used only at beginning or end so not relevant
-	return 0;
-}
+	Point pos = calc.get_pos();
 
-// Set to Absolute Positioning
-double g90(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
+	pos.x = 0;
+	pos.y = 0;
+	pos.z = 0;
+
+	calc.set_pos(pos);
 }
 
 // Set Position
-double g92(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
+void g92(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 {
 	vector<string>::const_iterator it;
 	pair<char, double> arg;
+	Point pos = calc.get_pos();
 
 #if DEBUG
 	for (vector<string>::const_iterator it = line_tokens.begin(); it != line_tokens.end(); ++it)
@@ -212,20 +175,22 @@ double g92(const vector<string>& line_tokens, Point& pos, double& speed, double&
 		switch (arg.first)
 		{
 		case 'E':
-			e_total_offset += pos.e;
-			e_total_offset -= arg.second;
+		case 'e':
 			pos.e = arg.second;
 			break;
 
 		case 'X':
+		case 'x':
 			pos.x = arg.second;
 			break;
 
 		case 'Y':
+		case 'y':
 			pos.y = arg.second;
 			break;
 
 		case 'Z':
+		case 'z':
 			pos.z = arg.second;
 			break;
 
@@ -242,61 +207,5 @@ double g92(const vector<string>& line_tokens, Point& pos, double& speed, double&
 #endif // DEBUG
 
 	// There's no actual movement
-	return 0;
-}
-
-// Set extruder to absolute mode
-double m82(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
-}
-
-// Stop idle hold
-double m84(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
-}
-
-// Set Extruder Temperature
-double m104(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
-}
-
-// Fan On
-double m106(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
-}
-
-// Fan Off
-double m107(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
-}
-
-// Set Extruder Temperature and Wait
-double m109(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	// Assume everything is preheated
-	return 0;
-}
-
-// Display Message
-double m117(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
-}
-
-// Set Bed Temperature (Fast)
-double m140(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	return 0;
-}
-
-// Wait for bed temperature to reach target temp
-double m190(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset)
-{
-	// Assume everything is preheated
-	return 0;
+	calc.set_pos(pos);
 }

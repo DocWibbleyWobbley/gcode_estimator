@@ -5,28 +5,21 @@
 #include <string>
 
 #include "Point.h"
+#include "TimeCalc.h"
 
 using namespace std;
 
+
 // Typedef of the function pointer
-typedef double (*gcode_cmd_t)(const vector<string>&, Point&, double&, double&);
+typedef void (*gcode_cmd_t)(const vector<string>&, TimeCalc&, double&);
+
+// Always returns 0 sec
+void gcode_dummy(const vector<string>&, TimeCalc&, double&);
 
 // All handled gcode commands
-double g1(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double g4(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double g21(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double g28(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double g90(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double g92(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-
-double m82(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m84(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m104(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m106(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m107(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m109(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m117(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m140(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
-double m190(const vector<string>& line_tokens, Point& pos, double& speed, double& e_total_offset);
+void g1(const vector<string>& line_tokens, TimeCalc& calc, double& speed);
+void g4(const vector<string>& line_tokens, TimeCalc& calc, double& speed);
+void g28(const vector<string>& line_tokens, TimeCalc& calc, double& speed);
+void g92(const vector<string>& line_tokens, TimeCalc& calc, double& speed);
 
 #endif // GCODE_H_

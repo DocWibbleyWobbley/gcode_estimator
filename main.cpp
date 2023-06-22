@@ -7,12 +7,14 @@
 
 #include "Point.h"
 #include "gcode.h"
+#include "json.hpp"
 
 using namespace std;
 
 void usage(char *name)
 {
-	cout << "Usage: " << name << " [file]" << endl;
+	cout << "Usage:" << endl;
+	cout << name << " [file] ..." << endl;
 }
 
 bool is_gcode(const string& line)
@@ -78,44 +80,44 @@ void init_map(map<string, gcode_cmd_t>& gcode_map)
 	gcode_map["G4"] = g4;
 	gcode_map["g4"] = g4;
 
-	gcode_map["G21"] = g21;
-	gcode_map["g21"] = g21;
+	gcode_map["G21"] = gcode_dummy;
+	gcode_map["g21"] = gcode_dummy;
 
 	gcode_map["G28"] = g28;
 	gcode_map["g28"] = g28;
 
-	gcode_map["G90"] = g90;
-	gcode_map["g90"] = g90;
+	gcode_map["G90"] = gcode_dummy;
+	gcode_map["g90"] = gcode_dummy;
 
 	gcode_map["G92"] = g92;
 	gcode_map["g92"] = g92;
 
-	gcode_map["M82"] = m82;
-	gcode_map["m82"] = m82;
+	gcode_map["M82"] = gcode_dummy;
+	gcode_map["m82"] = gcode_dummy;
 
-	gcode_map["M84"] = m84;
-	gcode_map["m84"] = m84;
+	gcode_map["M84"] = gcode_dummy;
+	gcode_map["m84"] = gcode_dummy;
 
-	gcode_map["M104"] = m104;
-	gcode_map["m104"] = m104;
+	gcode_map["M104"] = gcode_dummy;
+	gcode_map["m104"] = gcode_dummy;
 
-	gcode_map["M106"] = m106;
-	gcode_map["m106"] = m106;
+	gcode_map["M106"] = gcode_dummy;
+	gcode_map["m106"] = gcode_dummy;
 
-	gcode_map["M107"] = m107;
-	gcode_map["m107"] = m107;
+	gcode_map["M107"] = gcode_dummy;
+	gcode_map["m107"] = gcode_dummy;
 
-	gcode_map["M109"] = m109;
-	gcode_map["m109"] = m109;
+	gcode_map["M109"] = gcode_dummy;
+	gcode_map["m109"] = gcode_dummy;
 
-	gcode_map["M117"] = m117;
-	gcode_map["m117"] = m117;
+	gcode_map["M117"] = gcode_dummy;
+	gcode_map["m117"] = gcode_dummy;
 
-	gcode_map["M140"] = m140;
-	gcode_map["m140"] = m140;
+	gcode_map["M140"] = gcode_dummy;
+	gcode_map["m140"] = gcode_dummy;
 
-	gcode_map["M190"] = m190;
-	gcode_map["m190"] = m190;
+	gcode_map["M190"] = gcode_dummy;
+	gcode_map["m190"] = gcode_dummy;
 }
 
 void print_time(double sec)
@@ -131,18 +133,79 @@ void print_time(double sec)
 	printf("%02d:%02d:%02.0f", hours, min, sec);
 }
 
+void init_calc(TimeCalc& calc)
+{
+	ifstream file("config.json");
+	nlohmann::json conf;
+	vector<string> conf_keys = {"x", "y", "z"};
+
+	try
+	{
+		file >> conf;
+	}
+	catch (const exception& e)
+	{
+		cout << e.what() << endl;
+		return;
+	}
+	file.close();
+
+	for (int i = 0; i < conf_keys.size(); ++i)
+	{
+		string key = conf_keys[i];
+		if (conf.contains(key) && conf[key].is_object())
+		{
+			if (conf[key].contains("acceleration") && conf[key]["acceleration"].is_number())
+			{
+				calc.set_max_acceleration(i, conf[key]["acceleration"]);
+			}
+
+			if (conf[key].contains("velocity") && conf[key]["velocity"].is_number())
+			{
+				calc.set_max_velocity(i, conf[key]["velocity"]);
+			}
+
+			if (conf[key].contains("jerk") && conf[key]["jerk"].is_number())
+			{
+				calc.set_max_jerk(i, conf[key]["jerk"]);
+			}
+		}
+	}
+
+	if (conf.contains("extruders") && conf["extruders"].is_array())
+	{
+		for (int i = 0; i < conf["extruders"].size(); ++i)
+		{
+			if (conf["extruders"][i].contains("acceleration") && conf["extruders"][i]["acceleration"].is_number())
+			{
+				calc.set_max_acceleration(3 + i, conf["extruders"][i]["acceleration"]);
+			}
+
+			if (conf["extruders"][i].contains("velocity") && conf["extruders"][i]["velocity"].is_number())
+			{
+				calc.set_max_velocity(3 + i, conf["extruders"][i]["velocity"]);
+			}
+
+			if (conf["extruders"][i].contains("jerk") && conf["extruders"][i]["jerk"].is_number())
+			{
+				calc.set_max_jerk(3 + i, conf["extruders"][i]["jerk"]);
+			}
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
 	ifstream file;
 	string line;
+	vector<string> filenames(&(argv[1]), &(argv[argc]));
 	vector<string> line_tokens;
 
 	map<string, gcode_cmd_t> gcode_map;
 
-	Point pos;
+	TimeCalc calc;
 	double speed;
 	double total_time;
-	double e_total;
 	int hours;
 	int minutes;
 
@@ -152,48 +215,55 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	pos.x = 0;
-	pos.y = 0;
-	pos.z = 0;
-	pos.e = 0;
-	speed = 0;
-	total_time = 0;
-	e_total = 0;
-
 	init_map(gcode_map);
 
-	file.open(argv[1]);
-	while (!file.eof())
+	for (string& fname : filenames)
 	{
-		getline(file, line);
-		if (!is_gcode(remove_comments(line)))
-		{
-			continue;
-		}
-		line_tokens = tokenize_line(line);
+		calc.reset();
+		init_calc(calc);
+		speed = 0;
 
-		if (0 != gcode_map.count(line_tokens[0]))
+		file.open(fname);
+		while (!file.eof())
 		{
-			total_time += gcode_map[line_tokens[0]](line_tokens, pos, speed, e_total);
+			getline(file, line);
+			if (!is_gcode(remove_comments(line)))
+			{
+				continue;
+			}
+			line_tokens = tokenize_line(line);
+
+			if (0 != gcode_map.count(line_tokens[0]))
+			{
+				gcode_map[line_tokens[0]](line_tokens, calc, speed);
+			}
+			else
+			{
+				cout << "Unknown Gcode '" << line_tokens[0] << "'" << endl;
+			}
 		}
-		else
+		file.close();
+
+		if (filenames.size() > 1)
 		{
-			cout << "Unknown Gcode '" << line_tokens[0] << "'" << endl;
+			cout << "--- " << fname << " ---" << endl;
 		}
+
+		calc.flush();
+		total_time = calc.get_time();
+		cout << "Filament - " << calc.get_extruder_length(0) << "mm" << endl;
+
+		cout << "Estimation   - ";
+		print_time(total_time);
+		cout << endl;
+
+		cout << "Adding 10%   - ";
+		print_time(total_time * 1.1);
+		cout << endl;
+
+		cout << "Removing 10% - ";
+		print_time(total_time * 0.9);
+		cout << endl;
 	}
-	file.close();
-
-	e_total += pos.e;
-
-	cout << "Filament - " << e_total << "mm" << endl;
-
-	cout << "Estimation - ";
-	print_time(total_time);
-	cout << endl;
-
-	cout << "Adding 10% - ";
-	print_time(total_time * 1.1);
-	cout << endl;
-
 	return 0;
 }
