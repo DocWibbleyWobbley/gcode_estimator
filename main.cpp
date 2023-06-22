@@ -137,8 +137,14 @@ void init_calc(TimeCalc& calc)
 {
 	ifstream file("config.json");
 	nlohmann::json conf;
-	vector<string> conf_keys = {"x", "y", "z"};
+	vector<string> conf_keys_types = {"acceleration", "velocity", "jerk"};
+	vector<string> conf_keys_axes = {"x", "y", "z"};
 
+
+	if (!file.is_open())
+	{
+		return;
+	}
 	try
 	{
 		file >> conf;
@@ -150,46 +156,74 @@ void init_calc(TimeCalc& calc)
 	}
 	file.close();
 
-	for (int i = 0; i < conf_keys.size(); ++i)
+	for (int j = 0; j < conf_keys_types.size(); ++j)
 	{
-		string key = conf_keys[i];
-		if (conf.contains(key) && conf[key].is_object())
+		string& key = conf_keys_types[j];
+
+		if (conf.contains(key) && conf["key"].is_object())
 		{
-			if (conf[key].contains("acceleration") && conf[key]["acceleration"].is_number())
+			// Set 3D Axes
+			for (int i = 0; i < conf_keys_axes.size(); ++i)
 			{
-				calc.set_max_acceleration(i, conf[key]["acceleration"]);
+				if (conf[key].contains(conf_keys_axes[i]) && conf[key][conf_keys_axes[i]].is_number())
+				{
+					switch (j)
+					{
+					case 0:
+						calc.set_max_acceleration(i, conf[key][conf_keys_axes[i]]);
+						break;
+
+					case 1:
+						calc.set_max_velocity(i, conf[key][conf_keys_axes[i]]);
+						break;
+
+					case 2:
+						calc.set_max_jerk(i, conf[key][conf_keys_axes[i]]);
+						break;
+					}
+				}
 			}
 
-			if (conf[key].contains("velocity") && conf[key]["velocity"].is_number())
+			// Set Extruders
+			if (conf[key].contains("e") && conf[key]["e"].is_array())
 			{
-				calc.set_max_velocity(i, conf[key]["velocity"]);
-			}
+				for (int i = 0; i < conf[key]["e"].size(); ++i)
+				{
+					if (conf[key]["e"][i].is_number())
+					{
+						switch (j)
+						{
+						case 0:
+							calc.set_max_acceleration(3 + i, conf[key]["e"][i]);
+							break;
 
-			if (conf[key].contains("jerk") && conf[key]["jerk"].is_number())
-			{
-				calc.set_max_jerk(i, conf[key]["jerk"]);
+						case 1:
+							calc.set_max_velocity(3 + i, conf[key]["e"][i]);
+							break;
+
+						case 2:
+							calc.set_max_jerk(3 + i, conf[key]["e"][i]);
+							break;
+						}
+					}
+				}
 			}
 		}
-	}
 
-	if (conf.contains("extruders") && conf["extruders"].is_array())
-	{
-		for (int i = 0; i < conf["extruders"].size(); ++i)
+		// Set Print Acceleration
+		if (conf.contains("acceleration") &&
+			conf["acceleration"].contains("print") &&
+			conf["acceleration"]["print"].is_number())
 		{
-			if (conf["extruders"][i].contains("acceleration") && conf["extruders"][i]["acceleration"].is_number())
-			{
-				calc.set_max_acceleration(3 + i, conf["extruders"][i]["acceleration"]);
-			}
+			calc.set_print_accel(conf["acceleration"]["print"]);
+		}
 
-			if (conf["extruders"][i].contains("velocity") && conf["extruders"][i]["velocity"].is_number())
-			{
-				calc.set_max_velocity(3 + i, conf["extruders"][i]["velocity"]);
-			}
-
-			if (conf["extruders"][i].contains("jerk") && conf["extruders"][i]["jerk"].is_number())
-			{
-				calc.set_max_jerk(3 + i, conf["extruders"][i]["jerk"]);
-			}
+		// Set Travel Acceleration
+		if (conf.contains("acceleration") &&
+			conf["acceleration"].contains("travel") &&
+			conf["acceleration"]["travel"].is_number())
+		{
+			calc.set_travel_accel(conf["acceleration"]["travel"]);
 		}
 	}
 }
@@ -253,16 +287,16 @@ int main(int argc, char **argv)
 		total_time = calc.get_time();
 		cout << "Filament - " << calc.get_extruder_length(0) << "mm" << endl;
 
-		cout << "Estimation   - ";
+		cout << "Estimation - ";
 		print_time(total_time);
 		cout << endl;
 
-		cout << "Adding 10%   - ";
+		cout << "+10%       - ";
 		print_time(total_time * 1.1);
 		cout << endl;
 
-		cout << "Removing 10% - ";
-		print_time(total_time * 0.9);
+		cout << "-15%       - ";
+		print_time(total_time * 0.85);
 		cout << endl;
 	}
 	return 0;

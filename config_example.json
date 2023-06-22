@@ -1,28 +1,31 @@
 {
-	"x":
+	"acceleration":
 	{
-		"acceleration": 500,
-		"velocity": 500,
-		"jerk": 10
+		"print": 500,
+		"travel": 1000,
+		"x": 500,
+		"y": 500,
+		"z": 100,
+		"e": [
+			1000
+		]
 	},
-	"y":
+	"velocity":
 	{
-		"acceleration": 500,
-		"velocity": 500,
-		"jerk": 10
+		"x": 500,
+		"y": 500,
+		"z": 5,
+		"e": [
+			50
+		]
 	},
-	"z":
+	"jerk":
 	{
-		"acceleration": 100,
-		"velocity": 5,
-		"jerk": 0.4
-	},
-	"extruders":
-	[
-		{
-			"acceleration": 500,
-			"velocity": 50,
-			"jerk": 5
-		}
-	]
+		"x": 10,
+		"y": 10,
+		"z": 0.3,
+		"e": [
+			5
+		]
+	}
 }

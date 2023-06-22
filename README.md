@@ -13,8 +13,8 @@ v3.11.2
 2. Execute `make`
 
 ### Settings
-* Use as is to get linear calculations for time
-* Copy `config_example.json` to `config.json` and edit based on your printer settings
+* Use without printer config to use linear moves. You should look at +10% Estimation
+* Alternatively copy `config_example.json` to `config.json` and edit based on your printer settings. You should look at -15% Estimation
 
 ### Usage
 `./gcode_time [file] ...`
@@ -22,8 +22,8 @@ v3.11.2
 **file** - a file containing gcode
 
 ### Example output
-`Estimation   - 05:20:10`
+`Estimation - 05:20:10`
 
-`Adding 10%   - 05:52:11`
+`+10%       - 05:52:11`
 
-`Removing 10% - 04:48:09`
+`-15%       - 04:32:09`

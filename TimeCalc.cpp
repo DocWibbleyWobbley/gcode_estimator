@@ -15,7 +15,9 @@
 #include <limits>
 #include "math.h"
 
-#include <iostream>
+#if DEBUG_CALC
+#	include <iostream>
+#endif
 
 using namespace std;
 
@@ -195,7 +197,7 @@ TimeCalc::PrinterMove::PrinterMove()
 }
 
 TimeCalc::TimeCalc()
-: m_time(0.0)
+: m_time(0.0), m_print_accel_max(0.0), m_travel_accel_max(0.0)
 {
 	reset();
 }
@@ -203,6 +205,8 @@ TimeCalc::TimeCalc()
 void TimeCalc::reset()
 {
 	m_time = 0.0;
+	m_print_accel_max = 0.0;
+	m_travel_accel_max = 0.0;
 
 	fill_n(m_extruder_length, EXTRUDER_COUNT, 0.0);
 	fill_n(m_pos, AXIS_COUNT, 0.0);
@@ -222,6 +226,7 @@ void TimeCalc::add_move(Point new_pos, double speed)
 	double vel;
 	double accel;
 	double prev_move_idx;
+	bool is_print;
 	static int counter = 0;
 
 	pos_new[0] = new_pos.x;
@@ -271,6 +276,34 @@ void TimeCalc::add_move(Point new_pos, double speed)
 
 	// Calculate acceleration
 	temp.clear();
+
+	// Is it a print move
+	is_print = false;
+	for (int i = 0; i < EXTRUDER_COUNT; ++i)
+	{
+		if (0.0 != move_new.delta[3 + i])
+		{
+			is_print = true;
+			break;
+		}
+	}
+
+	// Add max acceleration for specific move to be considered
+	if (is_print)
+	{
+		if (0.0 != m_print_accel_max)
+		{
+			temp.push_back(m_print_accel_max);
+		}
+	}
+	else
+	{
+		if (0.0 != m_travel_accel_max)
+		{
+			temp.push_back(m_travel_accel_max);
+		}
+	}
+
 	for (int i = 0 ; i < AXIS_COUNT; ++i)
 	{
 		if (0.0 != move_new.unit[i] && 0.0 != m_accel_max[i])
@@ -379,6 +412,7 @@ void TimeCalc::flush()
 		}
 		max = vector_max(times);
 
+#if DEBUG_CALC
 		if (max < 0)
 		{
 			printf("Dist - %10.5f - %10.5f\n", move.dist, max);
@@ -413,6 +447,8 @@ void TimeCalc::flush()
 				printf("Accel [%d] - %10.5f\n", i, move.accel[i]);
 			}
 		}
+#endif
+
 		m_time += max;
 	}
 	m_moves.clear();
@@ -465,4 +501,14 @@ void TimeCalc::set_max_jerk(int axis, double value)
 	{
 		m_jerk_max[axis] = value;
 	}
+}
+
+void TimeCalc::set_print_accel(double value)
+{
+	m_print_accel_max = value;
+}
+
+void TimeCalc::set_travel_accel(double value)
+{
+	m_travel_accel_max = value;
 }
