@@ -225,6 +225,14 @@ void init_calc(TimeCalc& calc)
 		{
 			calc.set_travel_accel(conf["acceleration"]["travel"]);
 		}
+
+		// Set Retract Acceleration
+		if (conf.contains("acceleration") &&
+			conf["acceleration"].contains("retract") &&
+			conf["acceleration"]["retract"].is_number())
+		{
+			calc.set_retract_accel(conf["acceleration"]["retract"]);
+		}
 	}
 }
 
@@ -295,8 +303,8 @@ int main(int argc, char **argv)
 		print_time(total_time * 1.1);
 		cout << endl;
 
-		cout << "-15%       - ";
-		print_time(total_time * 0.85);
+		cout << "-12.5%     - ";
+		print_time(total_time * 0.875);
 		cout << endl;
 	}
 	return 0;

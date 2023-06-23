@@ -13,8 +13,8 @@ v3.11.2
 2. Execute `make`
 
 ### Settings
-* Use without printer config to use linear moves. You should look at +10% Estimation
-* Alternatively copy `config_example.json` to `config.json` and edit based on your printer settings. You should look at -15% Estimation
+* Use without printer config to use linear moves. You should look at +10% Estimation. It's not reliable on prints with lots of infill.
+* Alternatively copy `config_example.json` to `config.json` and edit based on your printer settings. You should look at -12.5% Estimation
 
 ### Usage
 `./gcode_time [file] ...`
@@ -26,4 +26,4 @@ v3.11.2
 
 `+10%       - 05:52:11`
 
-`-15%       - 04:32:09`
+`-12.5%     - 04:40:09`

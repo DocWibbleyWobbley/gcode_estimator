@@ -35,6 +35,7 @@ private:
 
 	double m_print_accel_max;
 	double m_travel_accel_max;
+	double m_retract_accel_max;
 
 	std::vector<PrinterMove> m_moves;
 
@@ -57,6 +58,7 @@ public:
 
 	void set_print_accel(double value);
 	void set_travel_accel(double value);
+	void set_retract_accel(double value);
 };
 
 #endif // TIMECALC_H_

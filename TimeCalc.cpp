@@ -226,7 +226,8 @@ void TimeCalc::add_move(Point new_pos, double speed)
 	double vel;
 	double accel;
 	double prev_move_idx;
-	bool is_print;
+	double special_accel;
+	double de_sum;
 	static int counter = 0;
 
 	pos_new[0] = new_pos.x;
@@ -274,34 +275,32 @@ void TimeCalc::add_move(Point new_pos, double speed)
 	cout << "Vel - " << vel << endl;
 #endif
 
-	// Calculate acceleration
-	temp.clear();
-
-	// Is it a print move
-	is_print = false;
+	de_sum = 0.0;
 	for (int i = 0; i < EXTRUDER_COUNT; ++i)
 	{
-		if (0.0 != move_new.delta[3 + i])
-		{
-			is_print = true;
-			break;
-		}
+		de_sum += move_new.delta[3 + i];
 	}
 
-	// Add max acceleration for specific move to be considered
-	if (is_print)
+	// Set max acceleration for specific move to be considered
+	special_accel = 0.0;
+	if (0.0 == de_sum)
 	{
-		if (0.0 != m_print_accel_max)
-		{
-			temp.push_back(m_print_accel_max);
-		}
+		special_accel = m_travel_accel_max;
+	}
+	else if (move_new.dist == de_sum)
+	{
+		special_accel = m_retract_accel_max;
 	}
 	else
 	{
-		if (0.0 != m_travel_accel_max)
-		{
-			temp.push_back(m_travel_accel_max);
-		}
+		special_accel = m_print_accel_max;
+	}
+
+	// Calculate acceleration
+	temp.clear();
+	if (0.0 != special_accel)
+	{
+		temp.push_back(special_accel);
 	}
 
 	for (int i = 0 ; i < AXIS_COUNT; ++i)
@@ -511,4 +510,9 @@ void TimeCalc::set_print_accel(double value)
 void TimeCalc::set_travel_accel(double value)
 {
 	m_travel_accel_max = value;
+}
+
+void TimeCalc::set_retract_accel(double value)
+{
+	m_retract_accel_max = value;
 }
