@@ -9,6 +9,12 @@
 #include "gcode.h"
 #include "json.hpp"
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#define FOLDER_DELIM '\\'
+#else
+#define FOLDER_DELIM '/'
+#endif
+
 using namespace std;
 
 void usage(char *name)
@@ -133,18 +139,24 @@ void print_time(double sec)
 	printf("%02d:%02d:%02.0f", hours, min, sec);
 }
 
-void init_calc(TimeCalc& calc)
+void init_calc(string arg0, TimeCalc& calc)
 {
-	ifstream file("config.json");
+	ifstream file;
+	size_t pos;
 	nlohmann::json conf;
 	vector<string> conf_keys_types = {"acceleration", "velocity", "jerk"};
 	vector<string> conf_keys_axes = {"x", "y", "z"};
 
+	pos = arg0.rfind(FOLDER_DELIM);
+	arg0.erase(pos + 1);
+	arg0 += "config.json";
+	file.open(arg0);
 
 	if (!file.is_open())
 	{
 		return;
 	}
+
 	try
 	{
 		file >> conf;
@@ -262,7 +274,7 @@ int main(int argc, char **argv)
 	for (string& fname : filenames)
 	{
 		calc.reset();
-		init_calc(calc);
+		init_calc(argv[0], calc);
 		speed = 0;
 
 		file.open(fname);
