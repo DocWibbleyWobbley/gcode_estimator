@@ -270,11 +270,11 @@ int main(int argc, char **argv)
 	}
 
 	init_map(gcode_map);
+	init_calc(argv[0], calc);
 
 	for (string& fname : filenames)
 	{
 		calc.reset();
-		init_calc(argv[0], calc);
 		speed = 0;
 
 		file.open(fname);

@@ -197,22 +197,21 @@ TimeCalc::PrinterMove::PrinterMove()
 }
 
 TimeCalc::TimeCalc()
-: m_time(0.0), m_print_accel_max(0.0), m_travel_accel_max(0.0)
+: m_time(0.0), m_print_accel_max(0.0), m_travel_accel_max(0.0),
+	m_retract_accel_max(0.0)
 {
+	fill_n(m_accel_max, AXIS_COUNT, 0.0);
+	fill_n(m_vel_max, AXIS_COUNT, 0.0);
+	fill_n(m_jerk_max, AXIS_COUNT, 0.0);
 	reset();
 }
 
 void TimeCalc::reset()
 {
 	m_time = 0.0;
-	m_print_accel_max = 0.0;
-	m_travel_accel_max = 0.0;
 
 	fill_n(m_extruder_length, EXTRUDER_COUNT, 0.0);
 	fill_n(m_pos, AXIS_COUNT, 0.0);
-	fill_n(m_accel_max, AXIS_COUNT, 0.0);
-	fill_n(m_vel_max, AXIS_COUNT, 0.0);
-	fill_n(m_jerk_max, AXIS_COUNT, 0.0);
 
 	m_moves.clear();
 }
