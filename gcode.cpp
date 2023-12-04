@@ -37,12 +37,12 @@ pair<char, double> extract_argument(const string& str)
 	return result;
 }
 
-void gcode_dummy(const vector<string>&, TimeCalc&, double&)
+void gcode_dummy(const vector<string>&, TimeCalc&, double&, bool&)
 {
 }
 
 // Linear Move
-void g1(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
+void g1(const vector<string>& line_tokens, TimeCalc& calc, double& speed, bool& is_absolute)
 {
 	double result;
 	vector<string>::const_iterator it;
@@ -62,7 +62,14 @@ void g1(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 		// Extruder
 		case 'E':
 		case 'e':
-			pos.e = arg.second;
+			if (is_absolute)
+			{
+				pos.e = arg.second;
+			}
+			else
+			{
+				pos.e += arg.second;
+			}
 			break;
 
 		// Feedrate (Speed) in units/min
@@ -78,17 +85,38 @@ void g1(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 
 		case 'X':
 		case 'x':
-			pos.x = arg.second;
+			if (is_absolute)
+			{
+				pos.x = arg.second;
+			}
+			else
+			{
+				pos.x += arg.second;
+			}
 			break;
 
 		case 'Y':
 		case 'y':
-			pos.y = arg.second;
+			if (is_absolute)
+			{
+				pos.y = arg.second;
+			}
+			else
+			{
+				pos.y += arg.second;
+			}
 			break;
 
 		case 'Z':
 		case 'z':
-			pos.z = arg.second;
+			if (is_absolute)
+			{
+				pos.z = arg.second;
+			}
+			else
+			{
+				pos.z += arg.second;
+			}
 			break;
 
 		default:
@@ -101,7 +129,7 @@ void g1(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 }
 
 // Dwell
-void g4(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
+void g4(const vector<string>& line_tokens, TimeCalc& calc, double& speed, bool& is_absolute)
 {
 	double result;
 	vector<string>::const_iterator it;
@@ -137,7 +165,7 @@ void g4(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 }
 
 // Move to Origin (Home)
-void g28(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
+void g28(const vector<string>& line_tokens, TimeCalc& calc, double& speed, bool& is_absolute)
 {
 	Point pos = calc.get_pos();
 
@@ -148,8 +176,20 @@ void g28(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
 	calc.set_pos(pos);
 }
 
+// Set to Absolute Positioning
+void g90(const vector<string>& line_tokens, TimeCalc& calc, double& speed, bool& is_absolute)
+{
+	is_absolute = true;
+}
+
+// Set to Relative Positioning
+void g91(const vector<string>& line_tokens, TimeCalc& calc, double& speed, bool& is_absolute)
+{
+	is_absolute = false;
+}
+
 // Set Position
-void g92(const vector<string>& line_tokens, TimeCalc& calc, double& speed)
+void g92(const vector<string>& line_tokens, TimeCalc& calc, double& speed, bool& is_absolute)
 {
 	vector<string>::const_iterator it;
 	pair<char, double> arg;

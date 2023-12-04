@@ -92,8 +92,11 @@ void init_map(map<string, gcode_cmd_t>& gcode_map)
 	gcode_map["G28"] = g28;
 	gcode_map["g28"] = g28;
 
-	gcode_map["G90"] = gcode_dummy;
-	gcode_map["g90"] = gcode_dummy;
+	gcode_map["G90"] = g90;
+	gcode_map["g90"] = g90;
+
+	gcode_map["G91"] = g91;
+	gcode_map["g91"] = g91;
 
 	gcode_map["G92"] = g92;
 	gcode_map["g92"] = g92;
@@ -259,6 +262,7 @@ int main(int argc, char **argv)
 
 	TimeCalc calc;
 	double speed;
+	bool is_absolute = true;
 	double total_time;
 	int hours;
 	int minutes;
@@ -289,7 +293,7 @@ int main(int argc, char **argv)
 
 			if (0 != gcode_map.count(line_tokens[0]))
 			{
-				gcode_map[line_tokens[0]](line_tokens, calc, speed);
+				gcode_map[line_tokens[0]](line_tokens, calc, speed, is_absolute);
 			}
 			else
 			{
