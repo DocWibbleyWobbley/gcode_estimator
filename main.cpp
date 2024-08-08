@@ -282,7 +282,7 @@ int main(int argc, char **argv)
 		speed = 0;
 
 		file.open(fname);
-		while (!file.eof())
+		while (file.good())
 		{
 			getline(file, line);
 			if (!is_gcode(remove_comments(line)))
